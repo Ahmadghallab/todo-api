@@ -45,6 +45,19 @@ app.post('/todos', (req, res) => {
   res.json(body);
 });
 
+// DELETE /todos/:id
+app.delete('/todos/:id', (req, res) => {
+  let todoId = parseInt(req.params.id);
+  let matchedId = underscore.findWhere(todos, {id: todoId});
+
+  if (!matchedId) {
+    return res.status(404).json({"error": "no todos with that id"});
+  } else {
+    todos = underscore.without(todos, matchedId);
+    return res.json(matchedId);
+  }
+});
+
 app.listen(PORT, () => {
   console.log('Express listening on port ' + PORT + '!');
 });
