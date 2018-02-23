@@ -16,13 +16,19 @@ app.get('/', (req, res) => {
 
 // GET /todos
 app.get('/todos', (req, res) => {
-  let queryParam = req.query;
+  let queryParams = req.query;
   let filteredTodos = todos;
 
-  if(queryParam.hasOwnProperty('completed') && queryParam.completed === 'true') {
+  if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
     filteredTodos = underscore.where(todos, {completed: true});
-  } else if(queryParam.hasOwnProperty('completed') && queryParam.completed === 'false') {
+  } else if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
     filteredTodos = underscore.where(todos, {completed: false});
+  }
+
+  if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+    filteredTodos = underscore.filter(filteredTodos, (todo) => {
+      return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
+    });
   }
 
   res.json(filteredTodos);
