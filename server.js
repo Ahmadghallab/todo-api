@@ -17,35 +17,43 @@ app.get('/', (req, res) => {
 
 // GET /todos
 app.get('/todos', (req, res) => {
-  let queryParams = req.query;
-  let filteredTodos = todos;
+  let query = req.query;
+  let where = {};
 
-  if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
-    filteredTodos = underscore.where(todos, {completed: true});
-  } else if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
-    filteredTodos = underscore.where(todos, {completed: false});
+  if(query.hasOwnProperty('completed') && query.completed === 'true') {
+    where.completed = true;
+  } else if(query.hasOwnProperty('completed') && query.completed === 'false') {
+    where.completed = false;
   }
 
-  if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
-    filteredTodos = underscore.filter(filteredTodos, (todo) => {
-      return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
-    });
+  if(query.hasOwnProperty('q') && query.q.length > 0) {
+    where.description = {
+      $like: '%' + query.q + '%'
+    };
   }
 
-  res.json(filteredTodos);
+  db.todo.findAll({where: where}).then((todos) => {
+    res.json(todos);
+  }, (e) => {
+    res.status(500).send();
+  });
+
 });
 
 // GET /todos/:id
 app.get('/todos/:id', (req, res) => {
   const todoId = parseInt(req.params.id);
 
-  let matchedId = underscore.findWhere(todos, {id: todoId});
+  db.todo.findById(todoId).then((todo) => {
+    if(todo) {
+      res.json(todo.toJSON())
+    } else {
+      res.status(404).send()
+    }
+  }, (e) => {
+    res.status(500).json(e);
+  })
 
-  if (matchedId) {
-    res.json(matchedId);
-  } else {
-    res.status(404).send();
-  }
 });
 
 // POST /todos
@@ -58,26 +66,12 @@ app.post('/todos', (req, res) => {
     res.status(400).json(e);
   });
 
-  // if (underscore.isEmpty(body.description)) {
-  //   return res.status(400).send();
-  // }
-  // body.id = nextId++;
-  // todos.push(body);
-  // res.json(body);
-
 });
 
 // DELETE /todos/:id
 app.delete('/todos/:id', (req, res) => {
   let todoId = parseInt(req.params.id);
-  let matchedId = underscore.findWhere(todos, {id: todoId});
 
-  if (!matchedId) {
-    return res.status(404).json({"error": "no todos with that id"});
-  } else {
-    todos = underscore.without(todos, matchedId);
-    return res.json(matchedId);
-  }
 });
 
 // PUT /todos/:id
