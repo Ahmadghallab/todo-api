@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const underscore = require('underscore');
+const db = require('./db.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -49,15 +50,21 @@ app.get('/todos/:id', (req, res) => {
 
 // POST /todos
 app.post('/todos', (req, res) => {
-  const body = req.body;
+  const body = underscore.pick(req.body, 'description', 'completed');
 
-  if (underscore.isEmpty(body.description)) {
-    return res.status(400).send();
-  }
+  db.todo.create(body).then((todo) => {
+    res.json(todo.toJSON());
+  }, (e) => {
+    res.status(400).json(e);
+  });
 
-  body.id = nextId++;
-  todos.push(body);
-  res.json(body);
+  // if (underscore.isEmpty(body.description)) {
+  //   return res.status(400).send();
+  // }
+  // body.id = nextId++;
+  // todos.push(body);
+  // res.json(body);
+
 });
 
 // DELETE /todos/:id
@@ -102,6 +109,8 @@ app.put('/todos/:id', (req, res) => {
   res.json(matchedTodo)
 })
 
-app.listen(PORT, () => {
-  console.log('Express listening on port ' + PORT + '!');
+db.sequelize.sync().then(() => {
+  app.listen(PORT, () => {
+    console.log('Express listening on port' + PORT + '!');
+  });
 });
