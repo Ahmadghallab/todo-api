@@ -72,6 +72,22 @@ app.post('/todos', (req, res) => {
 app.delete('/todos/:id', (req, res) => {
   let todoId = parseInt(req.params.id);
 
+  db.todo.destroy({
+    where: {
+      id: todoId
+    }
+  }).then((todosDelted) => {
+    if(todosDelted === 0) {
+      res.status(404).json({
+        error: 'No todos with that id'
+      });
+    } else {
+      res.status(202).send();
+    }
+  }, () => {
+    res.status(500).send();
+  })
+
 });
 
 // PUT /todos/:id
