@@ -120,7 +120,8 @@ app.put('/todos/:id', (req, res) => {
 app.post('/users', (req, res) => {
   let body = underscore.pick(req.body, 'email', 'password');
   db.user.create(body).then((user) => {
-    res.json(user.toJSON());
+    let toPublicJSON = user.toJSON();
+    res.json(underscore.pick(toPublicJSON, 'id', 'email', 'createdAt', 'updatedAt'));
   }, (e) => {
     res.status(400).json(e);
   });
