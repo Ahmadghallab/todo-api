@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const underscore = require('underscore');
+const bcrypt = require('bcrypt');
 const db = require('./db.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -125,6 +126,34 @@ app.post('/users', (req, res) => {
   }, (e) => {
     res.status(400).json(e);
   });
+});
+
+// POST /users/login
+app.post('/users/login', (req, res) => {
+  let body = underscore.pick(req.body, 'email', 'password');
+
+  if(typeof body.email !== 'string' || typeof body.password !== 'string') {
+    return res.status(400).send();
+  }
+
+  db.user.findOne({
+    where: {
+      email: body.email
+    }
+  }).then((user) => {
+    if(user) {
+      if(bcrypt.compareSync(body.password, user.password_hash)) {
+        res.json(user.toJSON());
+      } else {
+        return res.status(401).send();
+      }
+    } else {
+      return res.status(401).send();
+    }
+  }, (e) => {
+    res.status(500).send();
+  });
+
 });
 
 db.sequelize.sync().then(() => {
