@@ -121,8 +121,7 @@ app.put('/todos/:id', (req, res) => {
 app.post('/users', (req, res) => {
   let body = underscore.pick(req.body, 'email', 'password');
   db.user.create(body).then((user) => {
-    let toPublicJSON = user.toJSON();
-    res.json(underscore.pick(toPublicJSON, 'id', 'email', 'createdAt', 'updatedAt'));
+    res.json(user.toPublicJSON());
   }, (e) => {
     res.status(400).json(e);
   });
@@ -132,27 +131,11 @@ app.post('/users', (req, res) => {
 app.post('/users/login', (req, res) => {
   let body = underscore.pick(req.body, 'email', 'password');
 
-  if(typeof body.email !== 'string' || typeof body.password !== 'string') {
-    return res.status(400).send();
-  }
-
-  db.user.findOne({
-    where: {
-      email: body.email
-    }
-  }).then((user) => {
-    if(user) {
-      if(bcrypt.compareSync(body.password, user.password_hash)) {
-        res.json(user.toJSON());
-      } else {
-        return res.status(401).send();
-      }
-    } else {
-      return res.status(401).send();
-    }
-  }, (e) => {
-    res.status(500).send();
-  });
+  db.user.authenticate(body).then((user) => {
+    res.json(user.toPublicJSON());
+  }, () => {
+    res.status(401).send();
+  })
 
 });
 
